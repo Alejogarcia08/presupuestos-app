@@ -67,6 +67,22 @@ export async function marcarCobrado(airtableBaseId, presupuestoId, cobrado) {
   return res.json();
 }
 
+export async function eliminarPresupuesto(airtableBaseId, presupuestoId) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/presupuestos/${presupuestoId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("No se pudo eliminar el presupuesto");
+  return res.json();
+}
+
+export async function eliminarProducto(airtableBaseId, productoId) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/productos/${productoId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("No se pudo eliminar el producto");
+  return res.json();
+}
+
 export async function registrarCobro(airtableBaseId, presupuestoId, incremento) {
   const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/presupuestos/${presupuestoId}/cobro`, {
     method: "PATCH",

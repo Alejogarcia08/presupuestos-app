@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
-import { listarPresupuestos, listarClientes, marcarCobrado, listarItemsPresupuesto } from "../lib/airtable.js";
+import { Check, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import {
+  listarPresupuestos,
+  listarClientes,
+  marcarCobrado,
+  listarItemsPresupuesto,
+  eliminarPresupuesto,
+} from "../lib/airtable.js";
 import Toast from "./Toast.jsx";
+import ConfirmDialog from "./ConfirmDialog.jsx";
 
 function fmtARS(n) {
   return Number(n || 0).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -17,6 +24,9 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
   const [detalleAbierto, setDetalleAbierto] = useState({});
   const [items, setItems] = useState({});
   const [cargandoDetalle, setCargandoDetalle] = useState({});
+
+  // Confirmacion generica: guarda que accion hay que hacer si el usuario confirma
+  const [confirmacion, setConfirmacion] = useState(null); // { titulo, mensaje, onConfirmar }
 
   async function cargarTodo() {
     setCargando(true);
@@ -45,8 +55,7 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
     }, 3000);
   }
 
-  async function toggleCobrado(p) {
-    const nuevoValor = !p.cobrado;
+  async function ejecutarToggleCobrado(p, nuevoValor) {
     const nombreCliente = clientesPorId[p.clienteId] || "el cliente";
     setPresupuestos(function (prev) {
       return prev.map(function (x) {
@@ -68,6 +77,53 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
       });
       mostrarConfirmacion("No se pudo actualizar, intenta de nuevo");
     }
+  }
+
+  function toggleCobrado(p) {
+    const nuevoValor = !p.cobrado;
+
+    // Marcar como cobrado no necesita confirmacion, es una accion segura.
+    // Desmarcar si necesita confirmacion, para que no se toque por error.
+    if (nuevoValor) {
+      ejecutarToggleCobrado(p, nuevoValor);
+      return;
+    }
+
+    setConfirmacion({
+      titulo: "Desmarcar como cobrado",
+      mensaje: "El presupuesto N. " + p.numero + " va a volver a aparecer como sin cobrar. Estas seguro?",
+      onConfirmar: function () {
+        setConfirmacion(null);
+        ejecutarToggleCobrado(p, nuevoValor);
+      },
+    });
+  }
+
+  function pedirEliminar(p) {
+    const nombreCliente = clientesPorId[p.clienteId] || "el cliente";
+    setConfirmacion({
+      titulo: "Eliminar presupuesto",
+      mensaje:
+        "Se va a borrar el presupuesto N. " +
+        p.numero +
+        " (" +
+        nombreCliente +
+        ") de forma permanente, junto con sus items. Esto no se puede deshacer.",
+      onConfirmar: async function () {
+        setConfirmacion(null);
+        try {
+          await eliminarPresupuesto(airtableBaseId, p.id);
+          setPresupuestos(function (prev) {
+            return prev.filter(function (x) {
+              return x.id !== p.id;
+            });
+          });
+          mostrarConfirmacion("Presupuesto N. " + p.numero + " eliminado");
+        } catch (err) {
+          mostrarConfirmacion("No se pudo eliminar, intenta de nuevo");
+        }
+      },
+    });
   }
 
   async function toggleDetalle(p) {
@@ -136,20 +192,34 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
                         {fmtARS(p.total)}
                       </div>
                     </div>
-                    <button
-                      onClick={function () {
-                        toggleCobrado(p);
-                      }}
-                      className="flex items-center justify-center gap-1.5 rounded-md py-2 text-[12px] font-semibold px-3 shrink-0 transition-colors"
-                      style={
-                        p.cobrado
-                          ? { backgroundColor: "#E4F0EA", color: "#3C7A5C" }
-                          : { backgroundColor: "#F4F2ED", color: "#8A8371" }
-                      }
-                    >
-                      {p.cobrado && <Check size={13} />}
-                      {p.cobrado ? "Cobrado" : "Marcar"}
-                    </button>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {p.cobrado && (
+                        <button
+                          onClick={function () {
+                            pedirEliminar(p);
+                          }}
+                          className="p-2 rounded-md text-[#B0876B] hover:bg-[#F4F2ED]"
+                          aria-label="Eliminar presupuesto"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                      <button
+                        onClick={function () {
+                          toggleCobrado(p);
+                        }}
+                        className="flex items-center justify-center gap-1.5 rounded-md py-2 text-[12px] font-semibold px-3 transition-colors"
+                        style={
+                          p.cobrado
+                            ? { backgroundColor: "#E4F0EA", color: "#3C7A5C" }
+                            : { backgroundColor: "#F4F2ED", color: "#8A8371" }
+                        }
+                      >
+                        {p.cobrado && <Check size={13} />}
+                        {p.cobrado ? "Cobrado" : "Marcar"}
+                      </button>
+                    </div>
                   </div>
 
                   <button
@@ -196,7 +266,19 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
           </div>
         )}
       </div>
+
       <Toast mensaje={mensajeToast} visible={mostrarToast} colorPrimario={colorPrimario} />
+
+      <ConfirmDialog
+        abierto={!!confirmacion}
+        titulo={confirmacion ? confirmacion.titulo : ""}
+        mensaje={confirmacion ? confirmacion.mensaje : ""}
+        colorPrimario={colorPrimario}
+        onConfirmar={confirmacion ? confirmacion.onConfirmar : function () {}}
+        onCancelar={function () {
+          setConfirmacion(null);
+        }}
+      />
     </div>
   );
 }

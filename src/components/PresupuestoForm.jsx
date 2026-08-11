@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Search, Plus, Trash2, UserPlus, ChevronDown, Check, X, FileText, PenLine } from "lucide-react";
-import { listarClientes, crearCliente, enviarPresupuesto, listarProductos } from "../lib/airtable.js";
+import { listarClientes, crearCliente, enviarPresupuesto, listarProductos, eliminarProducto } from "../lib/airtable.js";
 import Toast from "./Toast.jsx";
+import ConfirmDialog from "./ConfirmDialog.jsx";
 
 const fmtARS = (n) =>
   n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -40,6 +41,7 @@ export default function PresupuestoForm({
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [mensajeToast, setMensajeToast] = useState("");
+  const [confirmacion, setConfirmacion] = useState(null);
 
   const mostrarPestañas = modoDefault === "ambos";
   const [modo, setModo] = useState(modoDefault === "ambos" ? "catalogo" : modoDefault);
@@ -106,6 +108,38 @@ export default function PresupuestoForm({
     });
     setBusqueda("");
     setBuscadorOpen(false);
+  }
+
+  function pedirEliminarProducto(producto) {
+    setConfirmacion({
+      titulo: "Eliminar del catalogo",
+      mensaje:
+        '"' +
+        producto.nombre +
+        '" se va a borrar del catalogo de forma permanente. Los presupuestos que ya lo usaron no se ven afectados.',
+      onConfirmar: async function () {
+        setConfirmacion(null);
+        try {
+          await eliminarProducto(airtableBaseId, producto.id);
+          setCatalogo(function (prev) {
+            return prev.filter(function (x) {
+              return x.id !== producto.id;
+            });
+          });
+          setMensajeToast('"' + producto.nombre + '" eliminado del catalogo');
+          setEnviado(true);
+          setTimeout(function () {
+            setEnviado(false);
+          }, 2500);
+        } catch (err) {
+          setMensajeToast("No se pudo eliminar, intenta de nuevo");
+          setEnviado(true);
+          setTimeout(function () {
+            setEnviado(false);
+          }, 2500);
+        }
+      },
+    });
   }
 
   function actualizarCantidad(id, cantidad) {
@@ -375,17 +409,31 @@ export default function PresupuestoForm({
                     <div className="px-4 py-3 text-[13px] text-[#8A8371]">Sin resultados</div>
                   ) : (
                     resultados.map((p) => (
-                      <button
+                      <div
                         key={p.id}
-                        onClick={() => agregarProducto(p)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F4F2ED] text-left"
+                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F4F2ED]"
                       >
-                        <div>
-                          <div className="text-[14px] font-medium">{p.nombre}</div>
-                          <div className="text-[12px] text-[#8A8371]">{fmtARS(p.precio)} / {p.unidad}</div>
-                        </div>
-                        <Plus size={16} style={{ color: colorPrimario }} />
-                      </button>
+                        <button
+                          onClick={() => agregarProducto(p)}
+                          className="flex-1 flex items-center justify-between text-left min-w-0"
+                        >
+                          <div className="min-w-0">
+                            <div className="text-[14px] font-medium truncate">{p.nombre}</div>
+                            <div className="text-[12px] text-[#8A8371]">{fmtARS(p.precio)} / {p.unidad}</div>
+                          </div>
+                          <Plus size={16} style={{ color: colorPrimario }} className="shrink-0 ml-2" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            pedirEliminarProducto(p);
+                          }}
+                          className="p-2 ml-1 rounded text-[#B0876B] hover:bg-white shrink-0"
+                          aria-label="Eliminar del catalogo"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     ))
                   )}
                 </div>
@@ -503,6 +551,16 @@ export default function PresupuestoForm({
         </p>
       </div>
       <Toast mensaje={mensajeToast} visible={enviado} colorPrimario={colorPrimario} />
+      <ConfirmDialog
+        abierto={!!confirmacion}
+        titulo={confirmacion ? confirmacion.titulo : ""}
+        mensaje={confirmacion ? confirmacion.mensaje : ""}
+        colorPrimario={colorPrimario}
+        onConfirmar={confirmacion ? confirmacion.onConfirmar : function () {}}
+        onCancelar={function () {
+          setConfirmacion(null);
+        }}
+      />
     </div>
   );
 }
