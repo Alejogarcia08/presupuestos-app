@@ -25,8 +25,7 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
   const [items, setItems] = useState({});
   const [cargandoDetalle, setCargandoDetalle] = useState({});
 
-  // Confirmacion generica: guarda que accion hay que hacer si el usuario confirma
-  const [confirmacion, setConfirmacion] = useState(null); // { titulo, mensaje, onConfirmar }
+  const [confirmacion, setConfirmacion] = useState(null);
 
   async function cargarTodo() {
     setCargando(true);
@@ -55,46 +54,37 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
     }, 3000);
   }
 
-  async function ejecutarToggleCobrado(p, nuevoValor) {
+  // Esta pantalla es el archivo de los YA cobrados. Los que todavia no se
+  // cobraron del todo (nuevos o con pago parcial) viven en "Cobros
+  // pendientes", no aca.
+  var cobrados = presupuestos.filter(function (p) {
+    return p.cobrado;
+  });
+
+  function pedirDesmarcar(p) {
     const nombreCliente = clientesPorId[p.clienteId] || "el cliente";
-    setPresupuestos(function (prev) {
-      return prev.map(function (x) {
-        return x.id === p.id ? Object.assign({}, x, { cobrado: nuevoValor }) : x;
-      });
-    });
-    try {
-      await marcarCobrado(airtableBaseId, p.id, nuevoValor);
-      if (nuevoValor) {
-        mostrarConfirmacion("Presupuesto N. " + p.numero + " (" + nombreCliente + ") marcado como cobrado");
-      } else {
-        mostrarConfirmacion("Presupuesto N. " + p.numero + " desmarcado");
-      }
-    } catch (err) {
-      setPresupuestos(function (prev) {
-        return prev.map(function (x) {
-          return x.id === p.id ? Object.assign({}, x, { cobrado: p.cobrado }) : x;
-        });
-      });
-      mostrarConfirmacion("No se pudo actualizar, intenta de nuevo");
-    }
-  }
-
-  function toggleCobrado(p) {
-    const nuevoValor = !p.cobrado;
-
-    // Marcar como cobrado no necesita confirmacion, es una accion segura.
-    // Desmarcar si necesita confirmacion, para que no se toque por error.
-    if (nuevoValor) {
-      ejecutarToggleCobrado(p, nuevoValor);
-      return;
-    }
-
     setConfirmacion({
       titulo: "Desmarcar como cobrado",
-      mensaje: "El presupuesto N. " + p.numero + " va a volver a aparecer como sin cobrar. Estas seguro?",
-      onConfirmar: function () {
+      mensaje:
+        "El presupuesto N. " +
+        p.numero +
+        " (" +
+        nombreCliente +
+        ") va a volver completo a Cobros pendientes, como si no se hubiera cobrado nada. Estas seguro?",
+      onConfirmar: async function () {
         setConfirmacion(null);
-        ejecutarToggleCobrado(p, nuevoValor);
+        setPresupuestos(function (prev) {
+          return prev.filter(function (x) {
+            return x.id !== p.id;
+          });
+        });
+        try {
+          await marcarCobrado(airtableBaseId, p.id, false);
+          mostrarConfirmacion("Presupuesto N. " + p.numero + " enviado de nuevo a Cobros pendientes");
+        } catch (err) {
+          await cargarTodo();
+          mostrarConfirmacion("No se pudo actualizar, intenta de nuevo");
+        }
       },
     });
   }
@@ -161,17 +151,20 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
         <p className="text-[11px] tracking-[0.18em] uppercase text-[#8A8371] font-semibold mb-1">
           {nombrePyme}
         </p>
-        <h1 className="text-[26px] sm:text-[28px] leading-tight font-bold mb-8" style={{ fontFamily: "IBM Plex Mono, monospace" }}>
+        <h1 className="text-[26px] sm:text-[28px] leading-tight font-bold mb-2" style={{ fontFamily: "IBM Plex Mono, monospace" }}>
           Mis presupuestos
         </h1>
+        <p className="text-[13px] text-[#8A8371] mb-8">
+          Archivo de presupuestos ya cobrados. Los que faltan cobrar estan en "Cobros pendientes".
+        </p>
 
         {cargando ? (
           <p className="text-[14px] text-[#8A8371]">Cargando...</p>
-        ) : presupuestos.length === 0 ? (
-          <p className="text-[14px] text-[#8A8371]">Todavia no hay presupuestos mandados.</p>
+        ) : cobrados.length === 0 ? (
+          <p className="text-[14px] text-[#8A8371]">Todavia no hay presupuestos cobrados.</p>
         ) : (
           <div className="space-y-2.5">
-            {presupuestos.map(function (p) {
+            {cobrados.map(function (p) {
               var abierto = !!detalleAbierto[p.id];
               var listaItems = items[p.id] || [];
 
@@ -194,30 +187,24 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      {p.cobrado && (
-                        <button
-                          onClick={function () {
-                            pedirEliminar(p);
-                          }}
-                          className="p-2 rounded-md text-[#B0876B] hover:bg-[#F4F2ED]"
-                          aria-label="Eliminar presupuesto"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
                       <button
                         onClick={function () {
-                          toggleCobrado(p);
+                          pedirEliminar(p);
                         }}
-                        className="flex items-center justify-center gap-1.5 rounded-md py-2 text-[12px] font-semibold px-3 transition-colors"
-                        style={
-                          p.cobrado
-                            ? { backgroundColor: "#E4F0EA", color: "#3C7A5C" }
-                            : { backgroundColor: "#F4F2ED", color: "#8A8371" }
-                        }
+                        className="p-2 rounded-md text-[#B0876B] hover:bg-[#F4F2ED]"
+                        aria-label="Eliminar presupuesto"
                       >
-                        {p.cobrado && <Check size={13} />}
-                        {p.cobrado ? "Cobrado" : "Marcar"}
+                        <Trash2 size={16} />
+                      </button>
+                      <button
+                        onClick={function () {
+                          pedirDesmarcar(p);
+                        }}
+                        className="flex items-center justify-center gap-1.5 rounded-md py-2 text-[12px] font-semibold px-3"
+                        style={{ backgroundColor: "#E4F0EA", color: "#3C7A5C" }}
+                      >
+                        <Check size={13} />
+                        Cobrado
                       </button>
                     </div>
                   </div>

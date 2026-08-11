@@ -78,8 +78,8 @@ export default function CobrosPendientes({ airtableBaseId, nombrePyme, colorPrim
     }
   }
 
-  async function agregarCobro(p) {
-    var valor = nuevoPago[p.id];
+  async function agregarCobro(p, montoDirecto) {
+    var valor = montoDirecto !== undefined ? montoDirecto : nuevoPago[p.id];
     if (!valor || Number(valor) <= 0) return;
 
     setGuardando(function (prev) {
@@ -125,7 +125,7 @@ export default function CobrosPendientes({ airtableBaseId, nombrePyme, colorPrim
           Cobros pendientes
         </h1>
         <p className="text-[13px] text-[#8A8371] mb-8">
-          Cada vez que cobres una parte, escribi ese monto puntual y se suma solo al total ya cobrado.
+          Presupuestos nuevos o con pago parcial. Cobra todo de una vez o de a poco.
         </p>
 
         {cargando ? (
@@ -239,6 +239,21 @@ export default function CobrosPendientes({ airtableBaseId, nombrePyme, colorPrim
                       {guardando[p.id] ? "..." : "Agregar cobro"}
                     </button>
                   </div>
+                  <button
+                    onClick={function () {
+                      setNuevoPago(function (prev) {
+                        var copia = Object.assign({}, prev);
+                        copia[p.id] = String(p.saldoPendiente);
+                        return copia;
+                      });
+                      agregarCobro(p, p.saldoPendiente);
+                    }}
+                    disabled={!!guardando[p.id]}
+                    className="w-full mt-2 rounded-md px-4 py-2 text-[12px] font-semibold border disabled:opacity-50"
+                    style={{ borderColor: colorPrimario, color: colorPrimario }}
+                  >
+                    Cobrar todo ({fmtARS(p.saldoPendiente)})
+                  </button>
                 </div>
               );
             })}
