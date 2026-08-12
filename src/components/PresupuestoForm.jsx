@@ -237,7 +237,7 @@ export default function PresupuestoForm({
       <div className="max-w-2xl mx-auto px-4 sm:px-5 py-8 sm:py-10 lg:max-w-3xl lg:my-14 lg:bg-white lg:border lg:border-[#D9D2C2] lg:rounded-xl lg:shadow-sm lg:px-14 lg:py-12">
         {/* Encabezado */}
         <div className="mb-8">
-          <p className="text-[11px] tracking-[0.18em] uppercase text-[#8A8371] font-semibold mb-1">
+          <p className="text-[11px] tracking-[0.18em] uppercase text-[#8A8371] font-semibold mb-1 pr-14 sm:pr-0">
             {nombrePyme}
           </p>
           <h1 className="text-[28px] leading-tight font-bold" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
