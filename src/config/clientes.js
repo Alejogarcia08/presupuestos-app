@@ -14,8 +14,8 @@
 // -----------------------------------------------------------------------
 
 export const CLIENTES = {
-  "plomeria-hernan": {
-    nombrePyme: "Hernan Jorge Garcia — Gasista Matriculado y Plomería",
+  "demo-servicios": {
+   nombrePyme: "Demo — Servicios que facturan y cobran",
     // Airtable Base ID real (cuando conectemos la API de verdad)
     airtableBaseId: "app9PIKzet7oEn6b8",
     // "catalogo" -> el cliente busca productos de una lista fija

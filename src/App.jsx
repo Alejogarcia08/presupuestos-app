@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, useParams, Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Home } from "lucide-react";
 import PresupuestoForm from "./components/PresupuestoForm.jsx";
 import MisPresupuestos from "./components/MisPresupuestos.jsx";
 import ClientesARevisar from "./components/ClientesARevisar.jsx";
 import CobrosPendientes from "./components/CobrosPendientes.jsx";
+import LandingPage from "./components/LandingPage.jsx";
+import DemoGate from "./components/DemoGate.jsx";
 import { CLIENTES, CLIENTE_NO_ENCONTRADO } from "./config/clientes.js";
 
-// Menu hamburguesa: un boton fijo arriba a la derecha (comodo para tocar
-// con el dedo en un celular) que despliega la lista de pantallas.
+// Cambiala por la clave que quieras usar para el demo publico.
+var CLAVE_DEMO = "cambiar-esta-clave";
+
 function MenuNavegacion({ clienteSlug, colorPrimario, activa }) {
   const [abierto, setAbierto] = useState(false);
 
@@ -20,50 +23,75 @@ function MenuNavegacion({ clienteSlug, colorPrimario, activa }) {
   ];
 
   return (
-    <div className="fixed top-3 right-3 z-[100]">
-      <button
-        onClick={function () {
-          setAbierto(function (v) {
-            return !v;
-          });
-        }}
+    <div className="fixed top-3 right-3 z-[100] flex items-center gap-2">
+      <Link
+        to="/"
         className="bg-white border rounded-full w-11 h-11 flex items-center justify-center shadow"
         style={{ borderColor: "#D9D2C2", color: colorPrimario }}
-        aria-label="Abrir menu"
+        aria-label="Volver al inicio"
       >
-        {abierto ? <X size={22} /> : <Menu size={22} />}
-      </button>
+        <Home size={20} />
+      </Link>
 
-      {abierto && (
-        <div
-          className="absolute top-13 right-0 mt-2 bg-white border rounded-lg shadow-lg overflow-hidden w-56"
-          style={{ borderColor: "#D9D2C2" }}
+      <div className="relative">
+        <button
+          onClick={function () {
+            setAbierto(function (v) {
+              return !v;
+            });
+          }}
+          className="bg-white border rounded-full w-11 h-11 flex items-center justify-center shadow"
+          style={{ borderColor: "#D9D2C2", color: colorPrimario }}
+          aria-label="Abrir menu"
         >
-          {links.map(function (l) {
-            var esActiva = l.key === activa;
-            return (
-              <Link
-                key={l.key}
-                to={l.to}
-                onClick={function () {
-                  setAbierto(false);
-                }}
-                className="block px-4 py-3.5 text-[15px] font-medium border-b last:border-b-0"
-                style={{
-                  borderColor: "#F1EEE6",
-                  color: esActiva ? colorPrimario : "#1E2A38",
-                  backgroundColor: esActiva ? "#F4F2ED" : "white",
-                  fontWeight: esActiva ? 700 : 500,
-                }}
-              >
-                {l.label}
-              </Link>
-            );
-          })}
-        </div>
-      )}
+          {abierto ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
+        {abierto && (
+          <div
+            className="absolute top-13 right-0 mt-2 bg-white border rounded-lg shadow-lg overflow-hidden w-56"
+            style={{ borderColor: "#D9D2C2" }}
+          >
+            {links.map(function (l) {
+              var esActiva = l.key === activa;
+              return (
+                <Link
+                  key={l.key}
+                  to={l.to}
+                  onClick={function () {
+                    setAbierto(false);
+                  }}
+                  className="block px-4 py-3.5 text-[15px] font-medium border-b last:border-b-0"
+                  style={{
+                    borderColor: "#F1EEE6",
+                    color: esActiva ? colorPrimario : "#1E2A38",
+                    backgroundColor: esActiva ? "#F4F2ED" : "white",
+                    fontWeight: esActiva ? 700 : 500,
+                  }}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
+}
+
+// Envuelve una pagina con el candado de clave, SOLO si esa config tiene
+// "esDemoPublico: true". Los clientes reales (con link privado, no
+// publicado en ningun lado) no necesitan esto.
+function ConCandadoSiEsDemo({ config, children }) {
+  if (config.esDemoPublico) {
+    return (
+      <DemoGate clave={CLAVE_DEMO} colorPrimario={config.colorPrimario}>
+        {children}
+      </DemoGate>
+    );
+  }
+  return children;
 }
 
 function PaginaCliente() {
@@ -85,15 +113,17 @@ function PaginaCliente() {
   }
 
   return (
-    <div>
-      <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="form" />
-      <PresupuestoForm
-        airtableBaseId={config.airtableBaseId}
-        nombrePyme={config.nombrePyme}
-        modoDefault={config.modoDefault}
-        colorPrimario={config.colorPrimario}
-      />
-    </div>
+    <ConCandadoSiEsDemo config={config}>
+      <div>
+        <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="form" />
+        <PresupuestoForm
+          airtableBaseId={config.airtableBaseId}
+          nombrePyme={config.nombrePyme}
+          modoDefault={config.modoDefault}
+          colorPrimario={config.colorPrimario}
+        />
+      </div>
+    </ConCandadoSiEsDemo>
   );
 }
 
@@ -102,14 +132,16 @@ function PaginaMisPresupuestos() {
   const config = CLIENTES[clienteSlug] || CLIENTE_NO_ENCONTRADO;
 
   return (
-    <div>
-      <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="presupuestos" />
-      <MisPresupuestos
-        airtableBaseId={config.airtableBaseId}
-        nombrePyme={config.nombrePyme}
-        colorPrimario={config.colorPrimario}
-      />
-    </div>
+    <ConCandadoSiEsDemo config={config}>
+      <div>
+        <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="presupuestos" />
+        <MisPresupuestos
+          airtableBaseId={config.airtableBaseId}
+          nombrePyme={config.nombrePyme}
+          colorPrimario={config.colorPrimario}
+        />
+      </div>
+    </ConCandadoSiEsDemo>
   );
 }
 
@@ -118,14 +150,16 @@ function PaginaClientesARevisar() {
   const config = CLIENTES[clienteSlug] || CLIENTE_NO_ENCONTRADO;
 
   return (
-    <div>
-      <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="clientes" />
-      <ClientesARevisar
-        airtableBaseId={config.airtableBaseId}
-        nombrePyme={config.nombrePyme}
-        colorPrimario={config.colorPrimario}
-      />
-    </div>
+    <ConCandadoSiEsDemo config={config}>
+      <div>
+        <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="clientes" />
+        <ClientesARevisar
+          airtableBaseId={config.airtableBaseId}
+          nombrePyme={config.nombrePyme}
+          colorPrimario={config.colorPrimario}
+        />
+      </div>
+    </ConCandadoSiEsDemo>
   );
 }
 
@@ -134,18 +168,20 @@ function PaginaCobrosPendientes() {
   const config = CLIENTES[clienteSlug] || CLIENTE_NO_ENCONTRADO;
 
   return (
-    <div>
-      <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="cobros" />
-      <CobrosPendientes
-        airtableBaseId={config.airtableBaseId}
-        nombrePyme={config.nombrePyme}
-        colorPrimario={config.colorPrimario}
-      />
-    </div>
+    <ConCandadoSiEsDemo config={config}>
+      <div>
+        <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="cobros" />
+        <CobrosPendientes
+          airtableBaseId={config.airtableBaseId}
+          nombrePyme={config.nombrePyme}
+          colorPrimario={config.colorPrimario}
+        />
+      </div>
+    </ConCandadoSiEsDemo>
   );
 }
 
-function Inicio() {
+function PanelDev() {
   const slugs = Object.keys(CLIENTES);
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F2ED] text-[#1E2A38] px-6">
@@ -163,8 +199,25 @@ function Inicio() {
             </Link>
           ))}
         </div>
+        <Link to="/" className="block text-center text-[13px] mt-6 underline" style={{ color: "#8A8371" }}>
+          Volver a la landing
+        </Link>
       </div>
     </div>
+  );
+}
+
+function Landing() {
+  const slugs = Object.keys(CLIENTES);
+  const primerSlug = slugs.length > 0 ? slugs[0] : null;
+
+  return (
+    <LandingPage
+      demoSlug={primerSlug}
+      githubUrl="https://github.com/Alejogarcia08/presupuestos-app"
+      contactoEmail="alejogarciacar@gmail.com"
+      jiraUrl="https://tu-usuario.atlassian.net/jira/software/projects/TU-PROYECTO/boards/1"
+    />
   );
 }
 
@@ -172,7 +225,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Inicio />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/dev" element={<PanelDev />} />
         <Route path="/:clienteSlug" element={<PaginaCliente />} />
         <Route path="/:clienteSlug/presupuestos" element={<PaginaMisPresupuestos />} />
         <Route path="/:clienteSlug/clientes-a-revisar" element={<PaginaClientesARevisar />} />

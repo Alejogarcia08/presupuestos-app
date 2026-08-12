@@ -41,7 +41,7 @@ export default function ClientesARevisar({ airtableBaseId, nombrePyme, colorPrim
 
   return (
     <div className="min-h-screen bg-[#F4F2ED] text-[#1E2A38]" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-      <div className="max-w-2xl mx-auto px-4 sm:px-5 py-10">
+      <div className="max-w-2xl mx-auto px-4 sm:px-5 py-10 lg:max-w-3xl lg:my-14 lg:bg-white lg:border lg:border-[#D9D2C2] lg:rounded-xl lg:shadow-sm lg:px-14 lg:py-12">
         <p className="text-[11px] tracking-[0.18em] uppercase text-[#8A8371] font-semibold mb-1">
           {nombrePyme}
         </p>
