@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useParams, Link } from "react-router-dom";
-import { Menu, X, Home } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import PresupuestoForm from "./components/PresupuestoForm.jsx";
 import MisPresupuestos from "./components/MisPresupuestos.jsx";
 import ClientesARevisar from "./components/ClientesARevisar.jsx";
@@ -9,8 +9,16 @@ import LandingPage from "./components/LandingPage.jsx";
 import DemoGate from "./components/DemoGate.jsx";
 import { CLIENTES, CLIENTE_NO_ENCONTRADO } from "./config/clientes.js";
 
-// Cambiala por la clave que quieras usar para el demo publico.
 var CLAVE_DEMO = "cambiar-esta-clave";
+var MARCA = "Gestion PyME";
+
+// Actualiza el titulo de la pestaña del navegador segun la pantalla en la
+// que estas. Se usa en cada Pagina* de abajo.
+function useTitulo(nombrePantalla) {
+  useEffect(function () {
+    document.title = nombrePantalla + " - " + MARCA;
+  }, [nombrePantalla]);
+}
 
 function MenuNavegacion({ clienteSlug, colorPrimario, activa }) {
   const [abierto, setAbierto] = useState(false);
@@ -70,9 +78,6 @@ function MenuNavegacion({ clienteSlug, colorPrimario, activa }) {
   );
 }
 
-// Envuelve una pagina con el candado de clave, SOLO si esa config tiene
-// "esDemoPublico: true". Los clientes reales (con link privado, no
-// publicado en ningun lado) no necesitan esto.
 function ConCandadoSiEsDemo({ config, children }) {
   if (config.esDemoPublico) {
     return (
@@ -87,6 +92,7 @@ function ConCandadoSiEsDemo({ config, children }) {
 function PaginaCliente() {
   const { clienteSlug } = useParams();
   const config = CLIENTES[clienteSlug] || CLIENTE_NO_ENCONTRADO;
+  useTitulo("Nuevo presupuesto");
 
   if (!CLIENTES[clienteSlug]) {
     return (
@@ -120,6 +126,7 @@ function PaginaCliente() {
 function PaginaMisPresupuestos() {
   const { clienteSlug } = useParams();
   const config = CLIENTES[clienteSlug] || CLIENTE_NO_ENCONTRADO;
+  useTitulo("Mis presupuestos");
 
   return (
     <ConCandadoSiEsDemo config={config}>
@@ -138,6 +145,7 @@ function PaginaMisPresupuestos() {
 function PaginaClientesARevisar() {
   const { clienteSlug } = useParams();
   const config = CLIENTES[clienteSlug] || CLIENTE_NO_ENCONTRADO;
+  useTitulo("Clientes a revisar");
 
   return (
     <ConCandadoSiEsDemo config={config}>
@@ -156,6 +164,7 @@ function PaginaClientesARevisar() {
 function PaginaCobrosPendientes() {
   const { clienteSlug } = useParams();
   const config = CLIENTES[clienteSlug] || CLIENTE_NO_ENCONTRADO;
+  useTitulo("Cobros pendientes");
 
   return (
     <ConCandadoSiEsDemo config={config}>
@@ -173,6 +182,7 @@ function PaginaCobrosPendientes() {
 
 function PanelDev() {
   const slugs = Object.keys(CLIENTES);
+  useTitulo("Panel");
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F4F2ED] text-[#1E2A38] px-6">
       <div className="max-w-sm w-full">
@@ -200,6 +210,7 @@ function PanelDev() {
 function Landing() {
   const slugs = Object.keys(CLIENTES);
   const primerSlug = slugs.length > 0 ? slugs[0] : null;
+  useTitulo("Inicio");
 
   return (
     <LandingPage
