@@ -19,11 +19,11 @@ var BRASS = "#B08650";
 var SLATE = "#8A8371";
 var LINE = "#D9D2C2";
 
-export default function LandingPage({ demoSlug, githubUrl, contactoEmail, jiraUrl }) {
+export default function LandingPage({ demoSlug, demoTurnoSlug, githubUrl, contactoEmail, jiraUrl }) {
   return (
     <div style={{ backgroundColor: PAPER, color: INK, fontFamily: "Inter, system-ui, sans-serif" }}>
       <Hero />
-      <SelectorRubro demoSlug={demoSlug} />
+      <SelectorRubro demoSlug={demoSlug} demoTurnoSlug={demoTurnoSlug} />
       <ComoFunciona jiraUrl={jiraUrl} githubUrl={githubUrl} />
       <Footer githubUrl={githubUrl} contactoEmail={contactoEmail} />
     </div>
@@ -74,7 +74,7 @@ function Hero() {
   );
 }
 
-function SelectorRubro({ demoSlug }) {
+function SelectorRubro({ demoSlug, demoTurnoSlug }) {
   var rubros = [
     {
       id: "comercio",
@@ -86,19 +86,19 @@ function SelectorRubro({ demoSlug }) {
         { icon: Users, label: "Clientes viejos para reactivar" },
       ],
       disponible: true,
-      to: demoSlug ? "/" + demoSlug : "/",
+      to: "/servicios",
     },
     {
       id: "turnos",
       titulo: "Negocios que agendan y fidelizan",
       subtitulo: "Para PyMEs que trabajan a base de turnos",
       modulos: [
-        { icon: Calendar, label: "Turnos y recordatorios automaticos" },
+        { icon: Calendar, label: "Turnos y recordatorios por WhatsApp" },
         { icon: Star, label: "Pedido de reseñas despues del trabajo" },
         { icon: Users, label: "Clientes viejos para reactivar" },
       ],
-      disponible: false,
-      to: "#",
+      disponible: !!demoTurnoSlug,
+      to: "/agenda",
     },
   ];
 
@@ -285,7 +285,6 @@ function ComoFunciona({ jiraUrl, githubUrl }) {
           )}
         </div>
 
-        {/* Seguimiento del desarrollo: link a Jira y/o GitHub */}
         {(jiraUrl || githubUrl) && (
           <div
             className="mt-12 pt-8 border-t flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8"
