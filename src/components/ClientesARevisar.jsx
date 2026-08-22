@@ -49,7 +49,7 @@ export default function ClientesARevisar({ airtableBaseId, nombrePyme, colorPrim
           Clientes a revisar
         </h1>
         <p className="text-[13px] text-[#8A8371] mb-8">
-          Clientes sin trabajos nuevos hace más de 6 meses — capaz les convenga escribirles.
+          Clientes sin trabajos nuevos hace más de 3 meses — capaz les convenga escribirles.
         </p>
 
         {cargando ? (
