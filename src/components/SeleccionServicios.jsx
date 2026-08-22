@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FileText, DollarSign, Users, ArrowRight } from "lucide-react";
+import { FileText, Users, ArrowRight } from "lucide-react";
 
 var INK = "#1E2A38";
 var PAPER = "#F4F2ED";
@@ -12,17 +12,10 @@ export default function SeleccionServicios({ demoSlug }) {
   var opciones = [
     {
       id: "presupuestos",
-      titulo: "Presupuestos",
-      subtitulo: "Con catalogo o carga libre",
+      titulo: "Presupuestos y cobros",
+      subtitulo: "Catalogo o carga libre, cobros parciales y saldo pendiente",
       icon: FileText,
       to: demoSlug ? "/" + demoSlug : "#",
-    },
-    {
-      id: "cobros",
-      titulo: "Cobros pendientes",
-      subtitulo: "Cobros parciales y saldo pendiente",
-      icon: DollarSign,
-      to: demoSlug ? "/" + demoSlug + "/cobros-pendientes" : "#",
     },
     {
       id: "clientes",
@@ -35,7 +28,7 @@ export default function SeleccionServicios({ demoSlug }) {
 
   return (
     <div className="min-h-screen bg-[#F4F2ED] flex items-center justify-center px-5" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
-      <div className="max-w-3xl w-full">
+      <div className="max-w-2xl w-full">
         <p className="text-[11px] tracking-[0.18em] uppercase font-semibold mb-2 text-center" style={{ color: SLATE }}>
           Servicios que facturan y cobran
         </p>
@@ -46,7 +39,7 @@ export default function SeleccionServicios({ demoSlug }) {
           Elegi que modulo probar
         </h1>
 
-        <div className="grid sm:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 gap-5">
           {opciones.map(function (o) {
             var Icon = o.icon;
             return (
