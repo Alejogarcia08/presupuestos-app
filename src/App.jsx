@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useParams, Link } from "react-router-dom";
 import { Menu, X, Home, ArrowLeft } from "lucide-react";
-import PresupuestoForm from "./components/PresupuestoForm.jsx";
+import Presupuestos from "./components/Presupuestos.jsx";
 import MisPresupuestos from "./components/MisPresupuestos.jsx";
 import ClientesARevisar from "./components/ClientesARevisar.jsx";
-import CobrosPendientes from "./components/CobrosPendientes.jsx";
 import Turnos from "./components/Turnos.jsx";
 import Pacientes from "./components/Pacientes.jsx";
 import SeleccionAgenda from "./components/SeleccionAgenda.jsx";
@@ -34,11 +33,10 @@ function MenuNavegacion({ clienteSlug, colorPrimario, activa }) {
   ];
 
   var linksDelGrupo = [];
-  if (activa === "form" || activa === "presupuestos" || activa === "cobros") {
+  if (activa === "form" || activa === "presupuestos") {
     linksDelGrupo = [
-      { to: "/" + clienteSlug, label: "Nuevo presupuesto", key: "form" },
+      { to: "/" + clienteSlug, label: "Presupuestos", key: "form" },
       { to: "/" + clienteSlug + "/presupuestos", label: "Presupuestos cobrados", key: "presupuestos" },
-      { to: "/" + clienteSlug + "/cobros-pendientes", label: "Presupuestos a cobrar", key: "cobros" },
     ];
   } else if (activa === "clientes") {
     linksDelGrupo = [{ to: "/" + clienteSlug + "/clientes-a-revisar", label: "Clientes a revisar", key: "clientes" }];
@@ -165,7 +163,7 @@ function ConCandadoSiEsDemo({ config, children }) {
 function PaginaCliente() {
   const { clienteSlug } = useParams();
   const config = CLIENTES[clienteSlug] || CLIENTE_NO_ENCONTRADO;
-  useTitulo("Nuevo presupuesto");
+  useTitulo("Presupuestos");
 
   if (!CLIENTES[clienteSlug]) {
     return (
@@ -185,7 +183,7 @@ function PaginaCliente() {
     <ConCandadoSiEsDemo config={config}>
       <div>
         <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="form" />
-        <PresupuestoForm
+        <Presupuestos
           airtableBaseId={config.airtableBaseId}
           nombrePyme={config.nombrePyme}
           modoDefault={config.modoDefault}
@@ -225,25 +223,6 @@ function PaginaClientesARevisar() {
       <div>
         <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="clientes" />
         <ClientesARevisar
-          airtableBaseId={config.airtableBaseId}
-          nombrePyme={config.nombrePyme}
-          colorPrimario={config.colorPrimario}
-        />
-      </div>
-    </ConCandadoSiEsDemo>
-  );
-}
-
-function PaginaCobrosPendientes() {
-  const { clienteSlug } = useParams();
-  const config = CLIENTES[clienteSlug] || CLIENTE_NO_ENCONTRADO;
-  useTitulo("Presupuestos a cobrar");
-
-  return (
-    <ConCandadoSiEsDemo config={config}>
-      <div>
-        <MenuNavegacion clienteSlug={clienteSlug} colorPrimario={config.colorPrimario} activa="cobros" />
-        <CobrosPendientes
           airtableBaseId={config.airtableBaseId}
           nombrePyme={config.nombrePyme}
           colorPrimario={config.colorPrimario}
@@ -407,7 +386,6 @@ export default function App() {
         <Route path="/:clienteSlug" element={<PaginaCliente />} />
         <Route path="/:clienteSlug/presupuestos" element={<PaginaMisPresupuestos />} />
         <Route path="/:clienteSlug/clientes-a-revisar" element={<PaginaClientesARevisar />} />
-        <Route path="/:clienteSlug/cobros-pendientes" element={<PaginaCobrosPendientes />} />
         <Route path="/agenda" element={<PaginaSeleccionAgenda />} />
         <Route path="/servicios" element={<PaginaSeleccionServicios />} />
         <Route path="/turnos/:turnoSlug" element={<PaginaTurnos />} />

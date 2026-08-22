@@ -55,8 +55,8 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
   }
 
   // Esta pantalla es el archivo de los YA cobrados. Los que todavia no se
-  // cobraron del todo (nuevos o con pago parcial) viven en "Cobros
-  // pendientes", no aca.
+  // cobraron del todo (nuevos o con pago parcial) viven en "Presupuestos a
+  // cobrar", no aca.
   var cobrados = presupuestos.filter(function (p) {
     return p.cobrado;
   });
@@ -70,7 +70,7 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
         p.numero +
         " (" +
         nombreCliente +
-        ") va a volver completo a Cobros pendientes, como si no se hubiera cobrado nada. Estas seguro?",
+        ') va a volver completo a "Presupuestos a cobrar", como si no se hubiera cobrado nada. Estas seguro?',
       onConfirmar: async function () {
         setConfirmacion(null);
         setPresupuestos(function (prev) {
@@ -80,7 +80,7 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
         });
         try {
           await marcarCobrado(airtableBaseId, p.id, false);
-          mostrarConfirmacion("Presupuesto N. " + p.numero + " enviado de nuevo a Cobros pendientes");
+          mostrarConfirmacion('Presupuesto N. ' + p.numero + ' enviado de nuevo a "Presupuestos a cobrar"');
         } catch (err) {
           await cargarTodo();
           mostrarConfirmacion("No se pudo actualizar, intenta de nuevo");
@@ -152,10 +152,10 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
           {nombrePyme}
         </p>
         <h1 className="text-[26px] sm:text-[28px] leading-tight font-bold mb-2" style={{ fontFamily: "IBM Plex Mono, monospace" }}>
-          Mis presupuestos
+          Presupuestos cobrados
         </h1>
         <p className="text-[13px] text-[#8A8371] mb-8">
-          Archivo de presupuestos ya cobrados. Los que faltan cobrar estan en "Cobros pendientes".
+          Archivo de presupuestos ya cobrados. Los que faltan cobrar estan en "Presupuestos a cobrar".
         </p>
 
         {cargando ? (
