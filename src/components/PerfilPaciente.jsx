@@ -270,14 +270,24 @@ export default function PerfilPaciente({ airtableBaseId, pacienteId, nombrePyme,
             </h1>
             <div className="flex items-center gap-3 mt-0.5">
               {paciente.telefono && (
-                <span className="flex items-center gap-1 text-[12px] text-[#8A8371]">
+                <a
+                  href={"https://wa.me/" + paciente.telefono.replace(/[^0-9]/g, "")}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-[12px] font-medium hover:underline"
+                  style={{ color: "#3C7A5C" }}
+                >
                   <Phone size={12} /> {paciente.telefono}
-                </span>
+                </a>
               )}
               {paciente.email && (
-                <span className="flex items-center gap-1 text-[12px] text-[#8A8371]">
+                <a
+                  href={"mailto:" + paciente.email}
+                  className="flex items-center gap-1 text-[12px] font-medium hover:underline"
+                  style={{ color: colorPrimario }}
+                >
                   <Mail size={12} /> {paciente.email}
-                </span>
+                </a>
               )}
             </div>
           </div>

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { UserRound, ChevronRight } from "lucide-react";
-import { listarPacientes, listarTurnos } from "../lib/airtable.js";
+import { UserRound, ChevronRight, Trash2 } from "lucide-react";
+import { listarPacientes, listarTurnos, eliminarPaciente } from "../lib/airtable.js";
+import Toast from "./Toast.jsx";
+import ConfirmDialog from "./ConfirmDialog.jsx";
 
 function fmtFecha(iso) {
   if (!iso) return "";
@@ -13,15 +15,29 @@ export default function Pacientes({ airtableBaseId, turnoSlug, nombrePyme, color
   const [pacientes, setPacientes] = useState([]);
   const [turnos, setTurnos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [mensajeToast, setMensajeToast] = useState("");
+  const [mostrarToast, setMostrarToast] = useState(false);
+  const [confirmacion, setConfirmacion] = useState(null);
+
+  async function cargarTodo() {
+    setCargando(true);
+    var [pac, tur] = await Promise.all([listarPacientes(airtableBaseId), listarTurnos(airtableBaseId)]);
+    setPacientes(pac);
+    setTurnos(tur);
+    setCargando(false);
+  }
 
   useEffect(function () {
-    setCargando(true);
-    Promise.all([listarPacientes(airtableBaseId), listarTurnos(airtableBaseId)]).then(function (res) {
-      setPacientes(res[0]);
-      setTurnos(res[1]);
-      setCargando(false);
-    });
+    cargarTodo();
   }, [airtableBaseId]);
+
+  function mostrarConfirmacion(texto) {
+    setMensajeToast(texto);
+    setMostrarToast(true);
+    setTimeout(function () {
+      setMostrarToast(false);
+    }, 3000);
+  }
 
   // Para cada paciente: cuantas sesiones tuvo y cual fue la mas reciente
   var resumenPorPaciente = {};
@@ -42,6 +58,32 @@ export default function Pacientes({ airtableBaseId, turnoSlug, nombrePyme, color
     if (fa === fb) return a.nombre.localeCompare(b.nombre);
     return fb.localeCompare(fa);
   });
+
+  function pedirEliminar(p, e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setConfirmacion({
+      titulo: "Eliminar paciente",
+      mensaje:
+        '"' +
+        p.nombre +
+        '" se va a borrar de forma permanente. Si tiene turnos cargados, quedan sin paciente asociado.',
+      onConfirmar: async function () {
+        setConfirmacion(null);
+        try {
+          await eliminarPaciente(airtableBaseId, p.id);
+          setPacientes(function (prev) {
+            return prev.filter(function (x) {
+              return x.id !== p.id;
+            });
+          });
+          mostrarConfirmacion('"' + p.nombre + '" eliminado');
+        } catch (err) {
+          mostrarConfirmacion("No se pudo eliminar, intenta de nuevo");
+        }
+      },
+    });
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F2ED] text-[#1E2A38]" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -86,13 +128,36 @@ export default function Pacientes({ airtableBaseId, turnoSlug, nombrePyme, color
                       </div>
                     </div>
                   </div>
-                  <ChevronRight size={18} className="text-[#8A8371] shrink-0" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={function (e) {
+                        pedirEliminar(p, e);
+                      }}
+                      className="p-2 rounded-md text-[#B0876B] hover:bg-[#F4F2ED]"
+                      aria-label="Eliminar paciente"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <ChevronRight size={18} className="text-[#8A8371]" />
+                  </div>
                 </Link>
               );
             })}
           </div>
         )}
       </div>
+
+      <Toast mensaje={mensajeToast} visible={mostrarToast} colorPrimario={colorPrimario} />
+      <ConfirmDialog
+        abierto={!!confirmacion}
+        titulo={confirmacion ? confirmacion.titulo : ""}
+        mensaje={confirmacion ? confirmacion.mensaje : ""}
+        colorPrimario={colorPrimario}
+        onConfirmar={confirmacion ? confirmacion.onConfirmar : function () {}}
+        onCancelar={function () {
+          setConfirmacion(null);
+        }}
+      />
     </div>
   );
 }
