@@ -27,6 +27,13 @@ import ConfirmDialog from "./ConfirmDialog.jsx";
 const fmtARS = (n) =>
   Number(n || 0).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 
+function fmtFechaCorta(iso) {
+  if (!iso) return "";
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 /**
  * Pantalla "Presupuestos": formulario para cargar uno nuevo (arriba) y
  * lista de "Presupuestos a cobrar" (abajo) — mismo patron que la pantalla
@@ -71,6 +78,7 @@ export default function Presupuestos({
   const [presupuestosPendientes, setPresupuestosPendientes] = useState([]);
   const [cargandoPendientes, setCargandoPendientes] = useState(true);
   const [nuevoPago, setNuevoPago] = useState({});
+  const [busquedaCobros, setBusquedaCobros] = useState("");
   const [guardandoPago, setGuardandoPago] = useState({});
   const [detalleAbierto, setDetalleAbierto] = useState({});
   const [itemsPorPresupuesto, setItemsPorPresupuesto] = useState({});
@@ -272,6 +280,17 @@ export default function Presupuestos({
   conSaldo.sort(function (a, b) {
     return (b.saldoPendiente || 0) - (a.saldoPendiente || 0);
   });
+
+  var totalPendiente = conSaldo.reduce(function (acc, p) {
+    return acc + (p.saldoPendiente || 0);
+  }, 0);
+
+  var conSaldoFiltrado = !busquedaCobros.trim()
+    ? conSaldo
+    : conSaldo.filter(function (p) {
+        var nombreCliente = (clientesPorId[p.clienteId] || "").toLowerCase();
+        return nombreCliente.includes(busquedaCobros.toLowerCase());
+      });
 
   async function toggleDetalle(p) {
     var estaAbierto = !!detalleAbierto[p.id];
@@ -646,9 +665,37 @@ export default function Presupuestos({
             <DollarSign size={17} style={{ color: colorPrimario }} />
             Presupuestos a cobrar
           </h2>
-          <p className="text-[13px] text-[#8A8371] mb-5">
+          <p className="text-[13px] text-[#8A8371] mb-4">
             Presupuestos nuevos o con pago parcial. Cobra todo de una vez o de a poco.
           </p>
+
+          {conSaldo.length > 0 && (
+            <div
+              className="rounded-md px-4 py-3 mb-4 flex items-center justify-between"
+              style={{ backgroundColor: "#F4F2ED" }}
+            >
+              <span className="text-[13px] font-medium text-[#5A5647]">
+                Total pendiente de cobrar ({conSaldo.length} {conSaldo.length === 1 ? "presupuesto" : "presupuestos"})
+              </span>
+              <span
+                className="text-[18px] font-bold"
+                style={{ fontFamily: "IBM Plex Mono, monospace", color: colorPrimario }}
+              >
+                {fmtARS(totalPendiente)}
+              </span>
+            </div>
+          )}
+
+          {conSaldo.length > 0 && (
+            <input
+              value={busquedaCobros}
+              onChange={function (e) {
+                setBusquedaCobros(e.target.value);
+              }}
+              placeholder="Buscar por cliente..."
+              className="w-full border border-[#D9D2C2] rounded-md px-3.5 py-2.5 text-[13px] outline-none focus:border-[#B08650] mb-4"
+            />
+          )}
 
           {cargandoPendientes ? (
             <p className="text-[14px] text-[#8A8371]">Cargando...</p>
@@ -656,9 +703,13 @@ export default function Presupuestos({
             <div className="bg-white border border-[#D9D2C2] rounded-md px-5 py-8 text-center">
               <p className="text-[14px] text-[#8A8371]">No hay saldos pendientes por ahora.</p>
             </div>
+          ) : conSaldoFiltrado.length === 0 ? (
+            <div className="bg-white border border-[#D9D2C2] rounded-md px-5 py-8 text-center">
+              <p className="text-[14px] text-[#8A8371]">Ningun cliente coincide con "{busquedaCobros}".</p>
+            </div>
           ) : (
             <div className="grid lg:grid-cols-2 gap-3">
-              {conSaldo.map(function (p) {
+              {conSaldoFiltrado.map(function (p) {
                 var valorNuevo = nuevoPago[p.id] !== undefined ? nuevoPago[p.id] : "";
                 var abierto = !!detalleAbierto[p.id];
                 var listaItems = itemsPorPresupuesto[p.id] || [];
@@ -672,7 +723,11 @@ export default function Presupuestos({
                           <div className="text-[15px] font-semibold truncate">
                             {clientesPorId[p.clienteId] || "(sin cliente)"}
                           </div>
-                          <div className="text-[12px] text-[#8A8371]">Presupuesto N. {p.numero}</div>
+                          <div className="text-[12px] text-[#8A8371]">
+                            Presupuesto N. {p.numero}
+                            {p.fecha && " · Creado: " + fmtFechaCorta(p.fecha)}
+                            {p.fechaUltimoCobro && p.montoCobrado > 0 && " · Último cobro: " + fmtFechaCorta(p.fechaUltimoCobro)}
+                          </div>
                         </div>
                       </div>
                       <div className="text-right shrink-0">

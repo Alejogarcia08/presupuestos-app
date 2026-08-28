@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Repeat } from "lucide-react";
+import { Repeat, ChevronLeft, ChevronRight } from "lucide-react";
 
 var DIAS_CORTO = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
 var HORA_INICIO = 8; // 08:00
@@ -27,7 +27,10 @@ function horaAMinutos(horaStr) {
 }
 
 export default function CalendarioSemanal({ turnos, pacientesPorId, colorPrimario, turnoSlug }) {
+  var [offsetSemanas, setOffsetSemanas] = useState(0);
+
   var lunes = lunesDeEstaSemana();
+  lunes.setDate(lunes.getDate() + offsetSemanas * 7);
   var hoyISO = formatoFechaISO(new Date());
 
   var diasDeLaSemana = DIAS_CORTO.map(function (corto, i) {
@@ -83,8 +86,60 @@ export default function CalendarioSemanal({ turnos, pacientesPorId, colorPrimari
     );
   }
 
+  var domingo = new Date(lunes);
+  domingo.setDate(lunes.getDate() + 6);
+  var rangoTexto =
+    lunes.toLocaleDateString("es-AR", { day: "2-digit", month: "short" }) +
+    " – " +
+    domingo.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });
+
   return (
     <div>
+      {/* Navegacion entre semanas */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={function () {
+            setOffsetSemanas(function (v) {
+              return v - 1;
+            });
+          }}
+          className="flex items-center gap-1 text-[13px] font-semibold px-3 py-2 rounded-md"
+          style={{ backgroundColor: "white", border: "1px solid #D9D2C2", color: colorPrimario }}
+        >
+          <ChevronLeft size={16} />
+          <span className="hidden sm:inline">Anterior</span>
+        </button>
+
+        <div className="text-center">
+          <div className="text-[14px] font-bold capitalize" style={{ color: colorPrimario }}>
+            {rangoTexto}
+          </div>
+          {offsetSemanas !== 0 && (
+            <button
+              onClick={function () {
+                setOffsetSemanas(0);
+              }}
+              className="text-[11px] underline text-[#8A8371]"
+            >
+              Volver a hoy
+            </button>
+          )}
+        </div>
+
+        <button
+          onClick={function () {
+            setOffsetSemanas(function (v) {
+              return v + 1;
+            });
+          }}
+          className="flex items-center gap-1 text-[13px] font-semibold px-3 py-2 rounded-md"
+          style={{ backgroundColor: "white", border: "1px solid #D9D2C2", color: colorPrimario }}
+        >
+          <span className="hidden sm:inline">Siguiente</span>
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
       {/* DESKTOP / TABLET: grilla horaria tradicional */}
       <div className="hidden md:block border border-[#D9D2C2] rounded-lg overflow-hidden bg-white">
         <div className="grid" style={{ gridTemplateColumns: "56px repeat(7, 1fr)" }}>

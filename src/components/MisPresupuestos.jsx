@@ -14,6 +14,13 @@ function fmtARS(n) {
   return Number(n || 0).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 }
 
+function fmtFechaCorta(iso) {
+  if (!iso) return "";
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrimario = "#1E2A38" }) {
   const [presupuestos, setPresupuestos] = useState([]);
   const [clientesPorId, setClientesPorId] = useState({});
@@ -26,6 +33,7 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
   const [cargandoDetalle, setCargandoDetalle] = useState({});
 
   const [confirmacion, setConfirmacion] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
 
   async function cargarTodo() {
     setCargando(true);
@@ -60,6 +68,13 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
   var cobrados = presupuestos.filter(function (p) {
     return p.cobrado;
   });
+
+  var cobradosFiltrados = !busqueda.trim()
+    ? cobrados
+    : cobrados.filter(function (p) {
+        var nombreCliente = (clientesPorId[p.clienteId] || "").toLowerCase();
+        return nombreCliente.includes(busqueda.toLowerCase());
+      });
 
   function pedirDesmarcar(p) {
     const nombreCliente = clientesPorId[p.clienteId] || "el cliente";
@@ -154,17 +169,30 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
         <h1 className="text-[26px] sm:text-[28px] leading-tight font-bold mb-2" style={{ fontFamily: "IBM Plex Mono, monospace" }}>
           Presupuestos cobrados
         </h1>
-        <p className="text-[13px] text-[#8A8371] mb-8">
+        <p className="text-[13px] text-[#8A8371] mb-5">
           Archivo de presupuestos ya cobrados. Los que faltan cobrar estan en "Presupuestos a cobrar".
         </p>
+
+        {cobrados.length > 0 && (
+          <input
+            value={busqueda}
+            onChange={function (e) {
+              setBusqueda(e.target.value);
+            }}
+            placeholder="Buscar por cliente..."
+            className="w-full border border-[#D9D2C2] rounded-md px-3.5 py-2.5 text-[13px] outline-none focus:border-[#B08650] mb-5"
+          />
+        )}
 
         {cargando ? (
           <p className="text-[14px] text-[#8A8371]">Cargando...</p>
         ) : cobrados.length === 0 ? (
           <p className="text-[14px] text-[#8A8371]">Todavia no hay presupuestos cobrados.</p>
+        ) : cobradosFiltrados.length === 0 ? (
+          <p className="text-[14px] text-[#8A8371]">Ningun cliente coincide con "{busqueda}".</p>
         ) : (
           <div className="space-y-2.5">
-            {cobrados.map(function (p) {
+            {cobradosFiltrados.map(function (p) {
               var abierto = !!detalleAbierto[p.id];
               var listaItems = items[p.id] || [];
 
@@ -184,6 +212,12 @@ export default function MisPresupuestos({ airtableBaseId, nombrePyme, colorPrima
                       >
                         {fmtARS(p.total)}
                       </div>
+                      {p.fecha && (
+                        <div className="text-[11px] text-[#8A8371] mt-0.5">
+                          Creado: {fmtFechaCorta(p.fecha)}
+                          {p.fechaUltimoCobro && " · Cobrado: " + fmtFechaCorta(p.fechaUltimoCobro)}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
