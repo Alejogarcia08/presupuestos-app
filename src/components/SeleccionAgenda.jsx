@@ -24,7 +24,7 @@ export default function SeleccionAgenda({ demoTurnoSlug }) {
       subtitulo: "Pedido de reseñas despues de cada trabajo",
       icon: Star,
       disponible: true,
-      to: "/fidelizacion",
+      to: demoTurnoSlug ? "/turnos/" + demoTurnoSlug + "/fidelizacion" : "#",
     },
   ];
 

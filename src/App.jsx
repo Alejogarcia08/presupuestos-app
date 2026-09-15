@@ -8,12 +8,18 @@ import Turnos from "./components/Turnos.jsx";
 import Pacientes from "./components/Pacientes.jsx";
 import SeleccionAgenda from "./components/SeleccionAgenda.jsx";
 import SeleccionServicios from "./components/SeleccionServicios.jsx";
+import SeleccionLogistica from "./components/SeleccionLogistica.jsx";
 import PerfilPaciente from "./components/PerfilPaciente.jsx";
 import Fidelizacion from "./components/Fidelizacion.jsx";
+import Flota from "./components/Flota.jsx";
+import FichaVehiculo from "./components/FichaVehiculo.jsx";
+import Conductores from "./components/Conductores.jsx";
+import OptimizacionRecorridos from "./components/OptimizacionRecorridos.jsx";
 import LandingPage from "./components/LandingPage.jsx";
 import DemoGate from "./components/DemoGate.jsx";
 import { CLIENTES, CLIENTE_NO_ENCONTRADO } from "./config/clientes.js";
 import { CLIENTES_TURNOS, CLIENTE_TURNOS_NO_ENCONTRADO } from "./config/clientesTurnos.js";
+import { CLIENTES_FLOTA, CLIENTE_FLOTA_NO_ENCONTRADO } from "./config/clientesFlota.js";
 
 var CLAVE_DEMO = "cambiar-esta-clave";
 var MARCA = "Gestion PyME";
@@ -91,15 +97,83 @@ function MenuNavegacion({ clienteSlug, colorPrimario, activa }) {
   );
 }
 
-// Menu del modulo Turnos: Inicio, Turnos, Fidelizacion
+// Menu del modulo Turnos/Fidelizacion: cambia segun en que pantalla estas
 function MenuTurnos({ turnoSlug, colorPrimario, activa }) {
+  const [abierto, setAbierto] = useState(false);
+
+  var base = [
+    { to: "/", label: "Inicio", key: "inicio" },
+    { to: "/agenda", label: "Modulos", key: "modulos" },
+  ];
+
+  var linksDelGrupo = [];
+  if (activa === "turnos" || activa === "pacientes") {
+    linksDelGrupo = [
+      { to: "/turnos/" + turnoSlug, label: "Turnos", key: "turnos" },
+      { to: "/turnos/" + turnoSlug + "/pacientes", label: "Pacientes", key: "pacientes" },
+    ];
+  } else if (activa === "fidelizacion") {
+    linksDelGrupo = [{ to: "/turnos/" + turnoSlug + "/fidelizacion", label: "Fidelizacion", key: "fidelizacion" }];
+  }
+
+  var links = base.concat(linksDelGrupo);
+
+  return (
+    <div className="fixed top-3 right-3 z-[100]">
+      <button
+        onClick={function () {
+          setAbierto(function (v) {
+            return !v;
+          });
+        }}
+        className="bg-white border rounded-full w-11 h-11 flex items-center justify-center shadow"
+        style={{ borderColor: "#D9D2C2", color: colorPrimario }}
+        aria-label="Abrir menu"
+      >
+        {abierto ? <X size={22} /> : <Menu size={22} />}
+      </button>
+
+      {abierto && (
+        <div
+          className="absolute top-13 right-0 mt-2 bg-white border rounded-lg shadow-lg overflow-hidden w-56"
+          style={{ borderColor: "#D9D2C2" }}
+        >
+          {links.map(function (l) {
+            var esActiva = l.key === activa;
+            return (
+              <Link
+                key={l.key}
+                to={l.to}
+                onClick={function () {
+                  setAbierto(false);
+                }}
+                className="block px-4 py-3.5 text-[15px] font-medium border-b last:border-b-0"
+                style={{
+                  borderColor: "#F1EEE6",
+                  color: esActiva ? colorPrimario : "#1E2A38",
+                  backgroundColor: esActiva ? "#F4F2ED" : "white",
+                  fontWeight: esActiva ? 700 : 500,
+                }}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Menu del modulo Flota: Inicio, Modulos, y segun la pantalla, Flota+Conductores
+function MenuFlota({ flotaSlug, colorPrimario, activa }) {
   const [abierto, setAbierto] = useState(false);
 
   var links = [
     { to: "/", label: "Inicio", key: "inicio" },
-    { to: "/agenda", label: "Modulos", key: "modulos" },
-    { to: "/turnos/" + turnoSlug, label: "Turnos", key: "turnos" },
-    { to: "/turnos/" + turnoSlug + "/pacientes", label: "Pacientes", key: "pacientes" },
+    { to: "/logistica", label: "Modulos", key: "modulos" },
+    { to: "/flota/" + flotaSlug, label: "Flota", key: "flota" },
+    { to: "/flota/" + flotaSlug + "/conductores", label: "Conductores", key: "conductores" },
   ];
 
   return (
@@ -303,15 +377,122 @@ function PaginaPerfilPaciente() {
   );
 }
 
-// Pagina placeholder del modulo Fidelizacion
+// Pagina de Fidelizacion, dentro del contexto de un cliente de Turnos
 function PaginaFidelizacion() {
+  const { turnoSlug } = useParams();
+  const config = CLIENTES_TURNOS[turnoSlug] || CLIENTE_TURNOS_NO_ENCONTRADO;
   useTitulo("Fidelizacion");
+
+  if (!CLIENTES_TURNOS[turnoSlug]) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F2ED] text-[#1E2A38] px-6">
+        <div className="text-center max-w-sm">
+          <h1 className="text-xl font-bold mb-2">Página no encontrada</h1>
+          <p className="text-[14px] text-[#8A8371]">
+            No hay ningún cliente configurado en la ruta "/turnos/{turnoSlug}". Revisá
+            src/config/clientesTurnos.js.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <MenuTurnos turnoSlug={Object.keys(CLIENTES_TURNOS)[0]} colorPrimario="#1E2A38" activa="fidelizacion" />
-      <Fidelizacion />
+      <MenuTurnos turnoSlug={turnoSlug} colorPrimario={config.colorPrimario} activa="fidelizacion" />
+      <Fidelizacion
+        airtableBaseId={config.airtableBaseId}
+        nombrePyme={config.nombrePyme}
+        colorPrimario={config.colorPrimario}
+        linkResenaGoogle={config.linkResenaGoogle}
+      />
     </div>
   );
+}
+
+// Pagina del tablero de Flota
+function PaginaFlota() {
+  const { flotaSlug } = useParams();
+  const config = CLIENTES_FLOTA[flotaSlug] || CLIENTE_FLOTA_NO_ENCONTRADO;
+  useTitulo("Flota");
+
+  if (!CLIENTES_FLOTA[flotaSlug]) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F2ED] text-[#1E2A38] px-6">
+        <div className="text-center max-w-sm">
+          <h1 className="text-xl font-bold mb-2">Página no encontrada</h1>
+          <p className="text-[14px] text-[#8A8371]">
+            No hay ningún cliente configurado en la ruta "/flota/{flotaSlug}". Revisá
+            src/config/clientesFlota.js.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <MenuFlota flotaSlug={flotaSlug} colorPrimario={config.colorPrimario} activa="flota" />
+      <Flota
+        airtableBaseId={config.airtableBaseId}
+        flotaSlug={flotaSlug}
+        nombrePyme={config.nombrePyme}
+        colorPrimario={config.colorPrimario}
+      />
+    </div>
+  );
+}
+
+// Pagina de ficha de un vehiculo puntual
+function PaginaFichaVehiculo() {
+  const { flotaSlug, vehiculoId } = useParams();
+  const config = CLIENTES_FLOTA[flotaSlug] || CLIENTE_FLOTA_NO_ENCONTRADO;
+  useTitulo("Vehiculo");
+
+  return (
+    <div>
+      <MenuFlota flotaSlug={flotaSlug} colorPrimario={config.colorPrimario} activa="flota" />
+      <FichaVehiculo
+        airtableBaseId={config.airtableBaseId}
+        vehiculoId={vehiculoId}
+        nombrePyme={config.nombrePyme}
+        colorPrimario={config.colorPrimario}
+      />
+    </div>
+  );
+}
+
+// Pagina de Conductores
+function PaginaConductores() {
+  const { flotaSlug } = useParams();
+  const config = CLIENTES_FLOTA[flotaSlug] || CLIENTE_FLOTA_NO_ENCONTRADO;
+  useTitulo("Conductores");
+
+  return (
+    <div>
+      <MenuFlota flotaSlug={flotaSlug} colorPrimario={config.colorPrimario} activa="conductores" />
+      <Conductores
+        airtableBaseId={config.airtableBaseId}
+        nombrePyme={config.nombrePyme}
+        colorPrimario={config.colorPrimario}
+      />
+    </div>
+  );
+}
+
+// Pagina placeholder de Optimizacion de recorridos
+function PaginaOptimizacionRecorridos() {
+  useTitulo("Optimizacion de recorridos");
+  return <OptimizacionRecorridos />;
+}
+
+// Pagina intermedia: elegir entre Flota y Optimizacion de recorridos
+function PaginaSeleccionLogistica() {
+  const flotaSlugs = Object.keys(CLIENTES_FLOTA);
+  const primerFlotaSlug = flotaSlugs.length > 0 ? flotaSlugs[0] : null;
+  useTitulo("Logistica y flota");
+
+  return <SeleccionLogistica demoFlotaSlug={primerFlotaSlug} />;
 }
 
 function PanelDev() {
@@ -346,12 +527,15 @@ function Landing() {
   const primerSlug = slugs.length > 0 ? slugs[0] : null;
   const turnoSlugs = Object.keys(CLIENTES_TURNOS);
   const primerTurnoSlug = turnoSlugs.length > 0 ? turnoSlugs[0] : null;
+  const flotaSlugs = Object.keys(CLIENTES_FLOTA);
+  const primerFlotaSlug = flotaSlugs.length > 0 ? flotaSlugs[0] : null;
   useTitulo("Inicio");
 
   return (
     <LandingPage
       demoSlug={primerSlug}
       demoTurnoSlug={primerTurnoSlug}
+      demoFlotaSlug={primerFlotaSlug}
       githubUrl="https://github.com/Alejogarcia08/presupuestos-app"
       contactoEmail="alejogarciacar@gmail.com"
       jiraUrl="https://tu-usuario.atlassian.net/jira/software/projects/TU-PROYECTO/boards/1"
@@ -391,7 +575,12 @@ export default function App() {
         <Route path="/turnos/:turnoSlug" element={<PaginaTurnos />} />
         <Route path="/turnos/:turnoSlug/pacientes" element={<PaginaPacientes />} />
         <Route path="/turnos/:turnoSlug/pacientes/:pacienteId" element={<PaginaPerfilPaciente />} />
-        <Route path="/fidelizacion" element={<PaginaFidelizacion />} />
+        <Route path="/turnos/:turnoSlug/fidelizacion" element={<PaginaFidelizacion />} />
+        <Route path="/logistica" element={<PaginaSeleccionLogistica />} />
+        <Route path="/flota/:flotaSlug" element={<PaginaFlota />} />
+        <Route path="/flota/:flotaSlug/vehiculos/:vehiculoId" element={<PaginaFichaVehiculo />} />
+        <Route path="/flota/:flotaSlug/conductores" element={<PaginaConductores />} />
+        <Route path="/recorridos" element={<PaginaOptimizacionRecorridos />} />
       </Routes>
     </BrowserRouter>
   );

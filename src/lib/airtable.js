@@ -166,6 +166,14 @@ export async function reprogramarTurno(airtableBaseId, turnoId, { fecha, hora })
   return res.json();
 }
 
+export async function marcarResenaSolicitada(airtableBaseId, turnoId) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/turnos/${turnoId}/resena`, {
+    method: "PATCH",
+  });
+  if (!res.ok) throw new Error("No se pudo actualizar");
+  return res.json();
+}
+
 export async function eliminarTurno(airtableBaseId, turnoId) {
   const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/turnos/${turnoId}`, {
     method: "DELETE",
@@ -199,5 +207,91 @@ export async function actualizarActivoTurnoRecurrente(airtableBaseId, reglaId, a
     body: JSON.stringify({ activo }),
   });
   if (!res.ok) throw new Error("No se pudo actualizar");
+  return res.json();
+}
+
+// === Flota y conductores (base separada "Sistema Flota") ===
+
+export async function listarVehiculos(airtableBaseId) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/vehiculos`);
+  if (!res.ok) throw new Error("No se pudieron cargar los vehiculos");
+  return res.json();
+}
+
+export async function crearVehiculo(airtableBaseId, datos) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/vehiculos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) throw new Error("No se pudo crear el vehiculo");
+  return res.json();
+}
+
+export async function actualizarVehiculo(airtableBaseId, vehiculoId, datos) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/vehiculos/${vehiculoId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) throw new Error("No se pudo actualizar el vehiculo");
+  return res.json();
+}
+
+export async function eliminarVehiculo(airtableBaseId, vehiculoId) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/vehiculos/${vehiculoId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("No se pudo eliminar el vehiculo");
+  return res.json();
+}
+
+export async function listarConductores(airtableBaseId) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/conductores`);
+  if (!res.ok) throw new Error("No se pudieron cargar los conductores");
+  return res.json();
+}
+
+export async function crearConductor(airtableBaseId, datos) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/conductores`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) throw new Error("No se pudo crear el conductor");
+  return res.json();
+}
+
+export async function actualizarConductor(airtableBaseId, conductorId, datos) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/conductores/${conductorId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) throw new Error("No se pudo actualizar el conductor");
+  return res.json();
+}
+
+export async function eliminarConductor(airtableBaseId, conductorId) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/conductores/${conductorId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("No se pudo eliminar el conductor");
+  return res.json();
+}
+
+export async function listarChecklists(airtableBaseId) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/checklists`);
+  if (!res.ok) throw new Error("No se pudieron cargar los checklists");
+  return res.json();
+}
+
+export async function crearChecklist(airtableBaseId, datos) {
+  const res = await fetch(`${SERVIDOR}/api/${airtableBaseId}/checklists`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) throw new Error("No se pudo guardar el checklist");
   return res.json();
 }

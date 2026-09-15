@@ -11,6 +11,10 @@ export const CLIENTES_TURNOS = {
     nombrePyme: "Demo — Turnos y agenda",
     airtableBaseId: "app4NnTVjUbsVFAD9",
     colorPrimario: "#1E2A38",
+    // Pegá acá el link de "Escribir una reseña" de Google del negocio.
+    // Si lo dejas vacio, el botón de pedir reseña igual funciona, solo
+    // que el mensaje no va a incluir el link.
+    linkResenaGoogle: "",
   },
 };
 

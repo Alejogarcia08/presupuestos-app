@@ -11,6 +11,8 @@ import {
   ArrowRight,
   Trello,
   ExternalLink,
+  Truck,
+  Route,
 } from "lucide-react";
 
 var INK = "#1E2A38";
@@ -19,11 +21,11 @@ var BRASS = "#B08650";
 var SLATE = "#8A8371";
 var LINE = "#D9D2C2";
 
-export default function LandingPage({ demoSlug, demoTurnoSlug, githubUrl, contactoEmail, jiraUrl }) {
+export default function LandingPage({ demoSlug, demoTurnoSlug, demoFlotaSlug, githubUrl, contactoEmail, jiraUrl }) {
   return (
     <div style={{ backgroundColor: PAPER, color: INK, fontFamily: "Inter, system-ui, sans-serif" }}>
       <Hero />
-      <SelectorRubro demoSlug={demoSlug} demoTurnoSlug={demoTurnoSlug} />
+      <SelectorRubro demoSlug={demoSlug} demoTurnoSlug={demoTurnoSlug} demoFlotaSlug={demoFlotaSlug} />
       <ComoFunciona jiraUrl={jiraUrl} githubUrl={githubUrl} />
       <Footer githubUrl={githubUrl} contactoEmail={contactoEmail} />
     </div>
@@ -74,7 +76,7 @@ function Hero() {
   );
 }
 
-function SelectorRubro({ demoSlug, demoTurnoSlug }) {
+function SelectorRubro({ demoSlug, demoTurnoSlug, demoFlotaSlug }) {
   var rubros = [
     {
       id: "comercio",
@@ -100,6 +102,17 @@ function SelectorRubro({ demoSlug, demoTurnoSlug }) {
       disponible: !!demoTurnoSlug,
       to: "/agenda",
     },
+    {
+      id: "logistica",
+      titulo: "Logistica y flota",
+      subtitulo: "Para PyMEs con vehiculos y repartos",
+      modulos: [
+        { icon: Truck, label: "Flota, conductores y vencimientos" },
+        { icon: Route, label: "Optimizacion de recorridos de entrega" },
+      ],
+      disponible: !!demoFlotaSlug,
+      to: "/logistica",
+    },
   ];
 
   return (
@@ -111,7 +124,7 @@ function SelectorRubro({ demoSlug, demoTurnoSlug }) {
         Elegi tu rubro
       </h2>
 
-      <div className="grid sm:grid-cols-2 gap-5 lg:gap-8">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-8">
         {rubros.map(function (r) {
           var Contenido = (
             <div
